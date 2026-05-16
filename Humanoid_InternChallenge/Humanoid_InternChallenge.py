@@ -1,145 +1,414 @@
 import sys
 import subprocess
 import os
+import threading
+import time
 
-# --- 0. AUTO-INSTALLER (Fixes IDE Environment Issues) ---
-# This forces your IDE's specific Python environment to install the package
+# --- 0. AUTO-INSTALLER (new google-genai package) ---
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
 except ImportError:
-    print(f"Module not found. Installing into the IDE's active environment:\n{sys.executable}")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "google-generativeai"])
-    print("\n--- INSTALLATION SUCCESSFUL! ---")
-    print("Please run this script one more time.")
+    print(f"Installing google-genai into: {sys.executable}")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "google-genai"])
+    print("\n--- INSTALLATION SUCCESSFUL! Please run the script again. ---")
     sys.exit(0)
+
+try:
+    import tkinter as tk
+except ImportError:
+    print("tkinter is not available.")
+    print("  Ubuntu/Debian: sudo apt install python3-tk")
+    print("  macOS:         brew install python-tk")
+    sys.exit(1)
+
 
 # --- 1. THE ENVIRONMENT ---
 class SimpleWorld:
-    def __init__(self, size=5):
-        self.size = size
-        self.agent_pos = [0, 0]
-        self.goal_pos = [size-1, size-1]
-        self.grid = [["." for _ in range(size)] for _ in range(size)]
-        self.grid[self.goal_pos[0]][self.goal_pos[1]] = "G"
+    """
+    5x5 grid world.
 
-    def get_observation(self):
-        """Returns a text-based description of what the agent sees."""
+    Layout:
+        . . . . .
+        . # # . .
+        . . K . .   K = key item
+        . # . # .
+        . . . . G   G = goal
+
+    Agent starts at (0,0), must collect KEY at (2,2), then reach EXIT at (4,4).
+    """
+
+    LAYOUT = [
+        [".", ".", ".", ".", "."],
+        [".", "#", "#", ".", "."],
+        [".", ".", "K", ".", "."],
+        [".", "#", ".", "#", "."],
+        [".", ".", ".", ".", "G"],
+    ]
+    SIZE = 5
+
+    def __init__(self):
+        self.agent_pos = [0, 0]
+        self.goal_pos  = [4, 4]
+        self.key_pos   = [2, 2]
+        self.has_key   = False
+        self.key_collected = False
+        self.steps = 0
+        self.done  = False
+        self.history = []
+
+    def get_observation(self) -> str:
+        """Structured text observation for the LLM."""
         x, y = self.agent_pos
-        obs = f"Your current position is ({x}, {y}). "
-        
-        # Check adjacent cells
+        parts = [
+            f"Position: ({x},{y}).",
+            f"Inventory: {'iron key' if self.has_key else 'empty'}.",
+        ]
+
+        adj = {
+            "North": (x-1, y), "South": (x+1, y),
+            "East":  (x, y+1), "West":  (x, y-1),
+        }
         surroundings = []
-        directions = {"North": (x-1, y), "South": (x+1, y), "East": (x, y+1), "West": (x, y-1)}
-        
-        for name, (nx, ny) in directions.items():
-            if 0 <= nx < self.size and 0 <= ny < self.size:
-                cell = "the Goal" if [nx, ny] == self.goal_pos else "empty space"
-                surroundings.append(f"to the {name} is {cell}")
+        for name, (nx, ny) in adj.items():
+            if not (0 <= nx < self.SIZE and 0 <= ny < self.SIZE):
+                surroundings.append(f"{name}: boundary wall")
             else:
-                surroundings.append(f"to the {name} is a boundary wall")
-        
-        return obs + "You see: " + ", ".join(surroundings) + "."
+                cell = self.LAYOUT[nx][ny]
+                if cell == "#":
+                    surroundings.append(f"{name}: wall")
+                elif [nx, ny] == self.goal_pos:
+                    surroundings.append(f"{name}: EXIT (G)")
+                elif [nx, ny] == self.key_pos and not self.key_collected:
+                    surroundings.append(f"{name}: KEY item on floor")
+                else:
+                    surroundings.append(f"{name}: open floor")
+
+        parts.append("Surroundings: " + "; ".join(surroundings) + ".")
+        if not self.key_collected:
+            parts.append("Objective: collect the KEY at (2,2), then go to the EXIT at (4,4).")
+        else:
+            parts.append("Objective: you have the key — reach the EXIT at (4,4).")
+
+        return " ".join(parts)
 
     def move(self, direction: str) -> str:
-        """Moves the agent. Directions: North, South, East, West."""
-        x, y = self.agent_pos
-        move_map = {"North": [-1, 0], "South": [1, 0], "East": [0, 1], "West": [0, -1]}
-        
+        """
+        Move the agent one step.
+        direction must be one of: North, South, East, West.
+        Returns a string describing what happened.
+        """
+        direction = direction.strip().capitalize()
+        move_map = {
+            "North": [-1,  0], "South": [1, 0],
+            "East":  [ 0,  1], "West":  [0, -1],
+        }
         if direction not in move_map:
-            return "Invalid direction."
-        
+            return f"Invalid direction '{direction}'. Use North, South, East, or West."
+
+        x, y = self.agent_pos
         dx, dy = move_map[direction]
         nx, ny = x + dx, y + dy
-        
-        if 0 <= nx < self.size and 0 <= ny < self.size:
-            self.agent_pos = [nx, ny]
-            if self.agent_pos == self.goal_pos:
-                return f"Moved {direction}. SUCCESS: You reached the goal!"
-            return f"Moved {direction} successfully to ({nx}, {ny})."
+
+        if not (0 <= nx < self.SIZE and 0 <= ny < self.SIZE):
+            result = f"Blocked: boundary wall to the {direction}."
+            self.history.append((list(self.agent_pos), direction, result))
+            return result
+
+        if self.LAYOUT[nx][ny] == "#":
+            result = f"Blocked: wall to the {direction}."
+            self.history.append((list(self.agent_pos), direction, result))
+            return result
+
+        self.agent_pos = [nx, ny]
+        self.steps += 1
+
+        extra = ""
+        if [nx, ny] == self.key_pos and not self.key_collected:
+            self.key_collected = True
+            self.has_key = True
+            extra = " You picked up the KEY!"
+
+        if self.agent_pos == self.goal_pos and self.has_key:
+            self.done = True
+            result = f"Moved {direction} to ({nx},{ny}).{extra} SUCCESS: reached the exit in {self.steps} steps!"
+        elif self.agent_pos == self.goal_pos:
+            result = f"Moved {direction} to ({nx},{ny}). At the exit, but you need the KEY first!"
         else:
-            return f"Move failed. You hit a boundary wall at the {direction}."
+            result = f"Moved {direction} to ({nx},{ny}).{extra}"
 
-# --- 2. THE HARNESS (Gemini Integration) ---
-api_file_path = "api_key.txt"
+        self.history.append((list(self.agent_pos), direction, result))
+        return result
 
-try:
-    with open(api_file_path, "r") as file:
-        api_key = file.read().strip()
-        
-    if not api_key:
-        print(f"Error: '{api_file_path}' is empty. Please paste your API key inside it.")
-        sys.exit(1)
-        
-except FileNotFoundError:
-    print(f"Error: Could not find '{api_file_path}'.")
-    print(f"Please create a file named '{api_file_path}' in the same folder as this script and paste your API key inside it.")
-    sys.exit(1)
 
-os.environ["GOOGLE_API_KEY"] = api_key
-genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+# --- 2. TKINTER MAP WINDOW ---
+class MapWindow:
+    CELL = 80
+    PAD  = 20
 
-world = SimpleWorld(size=3)
+    COLORS = {
+        "floor":        "#F5F3EE",
+        "wall":         "#3A3A38",
+        "goal":         "#9FE1CB",
+        "key":          "#FAC775",
+        "agent":        "#CECBF6",
+        "agent_border": "#534AB7",
+        "trail":        "#E0DDF5",
+        "text":         "#2C2C2A",
+        "bg":           "#FAFAF8",
+        "status_bg":    "#F0EEE8",
+    }
 
-def move_agent(direction: str):
-    """Call this to move the agent in the virtual world."""
-    return world.move(direction)
+    def __init__(self, world: SimpleWorld):
+        self.world = world
+        self._trail = set()
 
-print("Checking available models for your API key...")
-available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        self.root = tk.Tk()
+        self.root.title("Dungeon Agent — Live Map")
+        self.root.configure(bg=self.COLORS["bg"])
+        self.root.resizable(False, False)
 
-# The script will try these in order of preference
-preferred_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-1.0-pro', 'models/gemini-pro']
-selected_model = None
+        canvas_w = world.SIZE * self.CELL + self.PAD * 2
+        canvas_h = world.SIZE * self.CELL + self.PAD * 2
 
-for pref in preferred_models:
-    if pref in available_models:
-        selected_model = pref
-        break
+        self.canvas = tk.Canvas(
+            self.root, width=canvas_w, height=canvas_h,
+            bg=self.COLORS["bg"], highlightthickness=0,
+        )
+        self.canvas.pack(pady=(12, 0))
 
-# Fallback if none of the preferred ones match
-if not selected_model and available_models:
-    selected_model = available_models[0]
+        self.status_var = tk.StringVar(value="Initialising agent…")
+        tk.Label(
+            self.root, textvariable=self.status_var,
+            bg=self.COLORS["status_bg"], fg=self.COLORS["text"],
+            font=("Courier New", 11), anchor="w", padx=12, pady=6,
+        ).pack(fill="x", pady=(6, 0))
 
-if not selected_model:
-    print("Error: No suitable generative models found for this API key.")
-    sys.exit(1)
+        self.action_var = tk.StringVar(value="")
+        tk.Label(
+            self.root, textvariable=self.action_var,
+            bg=self.COLORS["bg"], fg="#534AB7",
+            font=("Courier New", 10), anchor="w", padx=12, pady=4,
+            wraplength=canvas_w - 24, justify="left",
+        ).pack(fill="x", pady=(0, 10))
 
-print(f"Automatically selected model: {selected_model}")
+        self._draw_grid()
 
-model = genai.GenerativeModel(
-    model_name=selected_model,
-    tools=[move_agent]
+    def _cell_xy(self, row, col):
+        return self.PAD + col * self.CELL, self.PAD + row * self.CELL
+
+    def _draw_grid(self):
+        self.canvas.delete("all")
+        w = self.world
+
+        for r in range(w.SIZE):
+            for c in range(w.SIZE):
+                x, y = self._cell_xy(r, c)
+                sym = w.LAYOUT[r][c]
+
+                if sym == "#":
+                    fill = self.COLORS["wall"]
+                elif [r, c] == w.goal_pos:
+                    fill = self.COLORS["goal"]
+                elif [r, c] == w.key_pos and not w.key_collected:
+                    fill = self.COLORS["key"]
+                elif (r, c) in self._trail:
+                    fill = self.COLORS["trail"]
+                else:
+                    fill = self.COLORS["floor"]
+
+                self.canvas.create_rectangle(
+                    x, y, x + self.CELL, y + self.CELL,
+                    fill=fill, outline="#DDDBD3", width=1,
+                )
+
+                if [r, c] == w.goal_pos:
+                    self.canvas.create_text(
+                        x + self.CELL//2, y + self.CELL//2,
+                        text="EXIT", font=("Courier New", 10, "bold"), fill="#0F6E56",
+                    )
+                elif [r, c] == w.key_pos and not w.key_collected:
+                    self.canvas.create_text(
+                        x + self.CELL//2, y + self.CELL//2,
+                        text="KEY", font=("Courier New", 10, "bold"), fill="#854F0B",
+                    )
+                elif sym != "#":
+                    self.canvas.create_text(
+                        x + 6, y + 6, text=f"{r},{c}",
+                        font=("Courier New", 7), fill="#BBBBBB", anchor="nw",
+                    )
+
+        # Agent circle
+        ar, ac = w.agent_pos
+        ax, ay = self._cell_xy(ar, ac)
+        m = 12
+        self.canvas.create_oval(
+            ax+m, ay+m, ax+self.CELL-m, ay+self.CELL-m,
+            fill=self.COLORS["agent"], outline=self.COLORS["agent_border"], width=2,
+        )
+        self.canvas.create_text(
+            ax + self.CELL//2, ay + self.CELL//2,
+            text="◉", font=("Courier New", 18, "bold"), fill=self.COLORS["agent_border"],
+        )
+
+    def update(self, status: str, last_action: str = ""):
+        """Refresh map + labels. Safe to call from the agent thread."""
+        r, c = self.world.agent_pos
+        self._trail.add((r, c))
+        self._draw_grid()
+        self.status_var.set(status)
+        self.action_var.set(last_action)
+        self.root.update()
+
+    def run_loop(self):
+        self.root.mainloop()
+
+
+# --- 3. TOOL DECLARATION for google-genai SDK ---
+MOVE_TOOL = types.Tool(
+    function_declarations=[
+        types.FunctionDeclaration(
+            name="move",
+            description="Move the agent one step in the given direction.",
+            parameters=types.Schema(
+                type="OBJECT",
+                properties={
+                    "direction": types.Schema(
+                        type="STRING",
+                        description="One of: North, South, East, West",
+                        enum=["North", "South", "East", "West"],
+                    )
+                },
+                required=["direction"],
+            ),
+        )
+    ]
 )
 
-# --- 3. THE REASONING LOOP ---
-def run_interaction():
-    chat = model.start_chat(enable_automatic_function_calling=True)
-    
-    prompt = (
-        "You are a robot agent in a 2D grid world. Your goal is to reach the Goal (G). "
-        "Use the 'move_agent' tool to navigate. Think step-by-step."
-    )
-    
-    print("--- Starting Mission ---")
-    
-    # Run for a maximum of 10 steps to prevent infinite loops
-    for i in range(10):
-        observation = world.get_observation()
-        print(f"\nStep {i+1}: {observation}")
-        
-        response = chat.send_message(f"Current Observation: {observation}. What is your next move?")
-        
-        print(f"Agent Logic: {response.text.strip()}")
-        
-        if hasattr(response, 'parts') and response.parts:
-            last_part_text = ""
-            for part in response.parts:
-                if hasattr(part, 'text'):
-                    last_part_text += part.text
-                    
-            if "SUCCESS" in last_part_text:
-                print("\nMISSION COMPLETE.")
-                break
+SYSTEM_PROMPT = (
+    "You are a robot agent navigating a 5x5 dungeon grid. "
+    "Your goal is to reach the EXIT at position (4,4). "
+    "There is a KEY at (2,2) — you MUST pick it up before the exit accepts you. "
+    "Walls (#) block movement — do not try to walk into them. "
+    "Call the move tool to act. Think step-by-step and plan an efficient route."
+)
 
+
+# --- 4. AGENT LOOP ---
+def run_agent(world: SimpleWorld, map_win: MapWindow):
+    api_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "api_key.txt")
+
+    try:
+        with open(api_file_path) as f:
+            api_key = f.read().strip()
+            print(f"Loaded API key: '{api_key}'.")
+        if not api_key:
+            print(f"Error: '{api_file_path}' is empty.")
+            return
+    except FileNotFoundError:
+        print(f"Error: '{api_file_path}' not found.")
+        print("Create 'api_key.txt' next to this script and paste your Gemini API key inside.")
+        return
+
+    client = genai.Client(api_key=api_key)
+
+    # Pick the best available model
+    preferred = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+    try:
+        available = [m.name for m in client.models.list()]
+        model_id  = next((p for p in preferred if any(p in a for a in available)), None)
+        if not model_id:
+            model_id = available[0] if available else "gemini-2.5-flash"
+    except Exception:
+        model_id = "gemini-2.5-flash"
+
+    print(f"Using model: {model_id}")
+
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM_PROMPT,
+        tools=[MOVE_TOOL],
+    )
+
+    # Conversation history
+    history: list[types.Content] = []
+
+    print("\n--- Mission Start ---")
+
+    for step in range(20):
+        obs = world.get_observation()
+        print(f"\nStep {step+1}: {obs}")
+
+        map_win.update(
+            status=f"Step {step+1} | pos {tuple(world.agent_pos)} | {'has key' if world.has_key else 'no key'}",
+        )
+
+        history.append(types.Content(
+            role="user",
+            parts=[types.Part(text=f"Observation: {obs}\nWhat is your next move?")],
+        ))
+
+        response = client.models.generate_content(
+            model=model_id,
+            contents=history,
+            config=config,
+        )
+
+        # Add delay after API call to respect rate limits
+        time.sleep(1.0)
+
+        candidate = response.candidates[0].content
+        history.append(candidate)
+
+        tool_results = []
+        for part in candidate.parts:
+            if hasattr(part, "text") and part.text:
+                print(f"Agent: {part.text.strip()}")
+
+            if hasattr(part, "function_call") and part.function_call:
+                fc = part.function_call
+                direction = fc.args.get("direction", "")
+                print(f"  → move({direction})")
+
+                result = world.move(direction)
+                print(f"  ← {result}")
+
+                map_win.update(
+                    status=f"Step {step+1} | pos {tuple(world.agent_pos)} | {'has key' if world.has_key else 'no key'}",
+                    last_action=f"→ move {direction}: {result}",
+                )
+
+                tool_results.append(
+                    types.Part(
+                        function_response=types.FunctionResponse(
+                            name=fc.name,
+                            response={"result": result},
+                        )
+                    )
+                )
+
+        if tool_results:
+            history.append(types.Content(role="user", parts=tool_results))
+
+        time.sleep(0.8)
+
+        if world.done:
+            map_win.update(
+                status=f"✓ MISSION COMPLETE in {world.steps} steps!",
+                last_action="",
+            )
+            print("\n=== MISSION COMPLETE ===")
+            return
+
+    map_win.update(status="✗ Max steps reached — mission failed.", last_action="")
+    print("\n=== Max steps reached ===")
+
+
+# --- 5. ENTRY POINT ---
 if __name__ == "__main__":
-    run_interaction()
+    world   = SimpleWorld()
+    map_win = MapWindow(world)
+
+    agent_thread = threading.Thread(target=run_agent, args=(world, map_win), daemon=True)
+    agent_thread.start()
+
+    map_win.run_loop()
