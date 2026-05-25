@@ -1,0 +1,424 @@
+{
+  "run_count": 4,
+  "runs": [
+    {
+      "run": 1,
+      "result": "FAILED",
+      "battery_left": 0,
+      "steps": 39,
+      "cause_of_death": "Battery completely drained by enemy robot.",
+      "key_collected": true,
+      "shield_collected": false,
+      "battery_collected": true,
+      "jammer_collected": false,
+      "deactivator_collected": false,
+      "fields": {
+        "(0, 1)": "Dead End",
+        "(0, 2)": "Wall",
+        "(1, 1)": "Wall",
+        "(0, 0)": "Safe Path",
+        "(1, 0)": "Safe Path",
+        "(2, 0)": "Safe Path",
+        "(3, 0)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 0)": "Wall",
+        "(3, 1)": "Debris Hazard",
+        "(2, 1)": "Safe Path",
+        "(2, 2)": "Safe Path",
+        "(2, 3)": "Wall",
+        "(1, 2)": "Safe Path",
+        "(1, 3)": "Safe Path",
+        "(1, 4)": "Debris Hazard",
+        "(0, 3)": "Safe Path",
+        "(0, 4)": "Safe Path",
+        "(0, 5)": "Safe Path",
+        "(1, 5)": "Energy Shield",
+        "(0, 6)": "Safe Path",
+        "(1, 6)": "Safe Path",
+        "(2, 6)": "Safe Path",
+        "(3, 6)": "Safe Path",
+        "(3, 5)": "Wall",
+        "(4, 6)": "Safe Path",
+        "(5, 6)": "Safe Path",
+        "(6, 6)": "Exit Door",
+        "(5, 5)": "Debris Hazard",
+        "(5, 4)": "Safe Path",
+        "(5, 3)": "Alarm Trap",
+        "(6, 4)": "Wall",
+        "(4, 4)": "Alarm Trap",
+        "(4, 5)": "Safe Path",
+        "(6, 5)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 3)": "Key Location",
+        "(3, 4)": "Hunter Jammer",
+        "(4, 2)": "Alarm Trap",
+        "(3, 3)": "Alarm Trap",
+        "(5, 2)": "Wall",
+        "(4, 1)": "Safe Path",
+        "(5, 1)": "Battery Pack"
+      },
+      "moves": {
+        "(5, 6)": [
+          "West (Bad: Hit Debris Hazard)"
+        ],
+        "(5, 4)": [
+          "East (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 5)": [
+          "South (Bad: Hit Debris Hazard)",
+          "West (Bad: Hit Alarm Trap)"
+        ],
+        "(6, 5)": [
+          "East (Good: Found Important Item/Exit)",
+          "North (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 4)": [
+          "West (Good: Found Important Item/Exit)"
+        ],
+        "(4, 1)": [
+          "South (Good: Found Important Item/Exit)"
+        ]
+      },
+      "lesson": "Run Completed."
+    },
+    {
+      "run": 2,
+      "result": "FAILED",
+      "battery_left": 0,
+      "steps": 21,
+      "cause_of_death": "Battery completely drained by enemy robot.",
+      "key_collected": true,
+      "shield_collected": false,
+      "battery_collected": true,
+      "jammer_collected": true,
+      "deactivator_collected": false,
+      "fields": {
+        "(0, 1)": "Dead End",
+        "(0, 2)": "Wall",
+        "(1, 1)": "Wall",
+        "(0, 0)": "Safe Path",
+        "(1, 0)": "Safe Path",
+        "(2, 0)": "Safe Path",
+        "(3, 0)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 0)": "Wall",
+        "(3, 1)": "Debris Hazard",
+        "(2, 1)": "Safe Path",
+        "(2, 2)": "Safe Path",
+        "(2, 3)": "Wall",
+        "(1, 2)": "Safe Path",
+        "(1, 3)": "Safe Path",
+        "(1, 4)": "Debris Hazard",
+        "(0, 3)": "Safe Path",
+        "(0, 4)": "Safe Path",
+        "(0, 5)": "Safe Path",
+        "(1, 5)": "Energy Shield",
+        "(0, 6)": "Safe Path",
+        "(1, 6)": "Safe Path",
+        "(2, 6)": "Safe Path",
+        "(3, 6)": "Safe Path",
+        "(3, 5)": "Wall",
+        "(4, 6)": "Safe Path",
+        "(5, 6)": "Safe Path",
+        "(6, 6)": "Exit Door",
+        "(5, 5)": "Debris Hazard",
+        "(5, 4)": "Safe Path",
+        "(5, 3)": "Alarm Trap",
+        "(6, 4)": "Wall",
+        "(4, 4)": "Alarm Trap",
+        "(4, 5)": "Safe Path",
+        "(6, 5)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 3)": "Key Location",
+        "(3, 4)": "Hunter Jammer",
+        "(4, 2)": "Alarm Trap",
+        "(3, 3)": "Alarm Trap",
+        "(5, 2)": "Wall",
+        "(4, 1)": "Safe Path",
+        "(5, 1)": "Battery Pack",
+        "(3, 2)": "Safe Path",
+        "(6, 3)": "Safe Path",
+        "(6, 2)": "Safe Path",
+        "(6, 1)": "Safe Path",
+        "(6, 0)": "Alarm Deactivator"
+      },
+      "moves": {
+        "(5, 6)": [
+          "West (Bad: Hit Debris Hazard)"
+        ],
+        "(5, 4)": [
+          "East (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 5)": [
+          "South (Bad: Hit Debris Hazard)",
+          "West (Bad: Hit Alarm Trap)"
+        ],
+        "(6, 5)": [
+          "East (Good: Found Important Item/Exit)",
+          "North (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 4)": [
+          "West (Good: Found Important Item/Exit)"
+        ],
+        "(4, 1)": [
+          "South (Good: Found Important Item/Exit)"
+        ],
+        "(3, 2)": [
+          "East (Bad: Hit Alarm Trap)"
+        ],
+        "(3, 3)": [
+          "East (Good: Found Important Item/Exit)"
+        ],
+        "(5, 3)": [
+          "West (Bad: Hit Wall)"
+        ],
+        "(6, 3)": [
+          "East (Bad: Hit Wall)"
+        ],
+        "(6, 1)": [
+          "North (Good: Found Important Item/Exit)"
+        ]
+      },
+      "lesson": "Run Completed."
+    },
+    {
+      "run": 3,
+      "result": "FAILED",
+      "battery_left": 0,
+      "steps": 32,
+      "cause_of_death": "Battery completely drained by enemy robot.",
+      "key_collected": true,
+      "shield_collected": true,
+      "battery_collected": true,
+      "jammer_collected": true,
+      "deactivator_collected": true,
+      "fields": {
+        "(0, 1)": "Dead End",
+        "(0, 2)": "Wall",
+        "(1, 1)": "Wall",
+        "(0, 0)": "Safe Path",
+        "(1, 0)": "Safe Path",
+        "(2, 0)": "Safe Path",
+        "(3, 0)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 0)": "Wall",
+        "(3, 1)": "Debris Hazard",
+        "(2, 1)": "Safe Path",
+        "(2, 2)": "Safe Path",
+        "(2, 3)": "Wall",
+        "(1, 2)": "Safe Path",
+        "(1, 3)": "Safe Path",
+        "(1, 4)": "Debris Hazard",
+        "(0, 3)": "Safe Path",
+        "(0, 4)": "Safe Path",
+        "(0, 5)": "Safe Path",
+        "(1, 5)": "Energy Shield",
+        "(0, 6)": "Safe Path",
+        "(1, 6)": "Safe Path",
+        "(2, 6)": "Safe Path",
+        "(3, 6)": "Safe Path",
+        "(3, 5)": "Wall",
+        "(4, 6)": "Safe Path",
+        "(5, 6)": "Safe Path",
+        "(6, 6)": "Exit Door",
+        "(5, 5)": "Debris Hazard",
+        "(5, 4)": "Safe Path",
+        "(5, 3)": "Alarm Trap",
+        "(6, 4)": "Wall",
+        "(4, 4)": "Alarm Trap",
+        "(4, 5)": "Safe Path",
+        "(6, 5)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 3)": "Key Location",
+        "(3, 4)": "Hunter Jammer",
+        "(4, 2)": "Alarm Trap",
+        "(3, 3)": "Alarm Trap",
+        "(5, 2)": "Wall",
+        "(4, 1)": "Safe Path",
+        "(5, 1)": "Battery Pack",
+        "(3, 2)": "Safe Path",
+        "(6, 3)": "Safe Path",
+        "(6, 2)": "Safe Path",
+        "(6, 1)": "Safe Path",
+        "(6, 0)": "Alarm Deactivator",
+        "(2, 4)": "Safe Path",
+        "(2, 5)": "Safe Path"
+      },
+      "moves": {
+        "(5, 6)": [
+          "West (Bad: Hit Debris Hazard)"
+        ],
+        "(5, 4)": [
+          "East (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 5)": [
+          "South (Bad: Hit Debris Hazard)",
+          "West (Bad: Hit Alarm Trap)"
+        ],
+        "(6, 5)": [
+          "East (Good: Found Important Item/Exit)",
+          "North (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 4)": [
+          "West (Good: Found Important Item/Exit)"
+        ],
+        "(4, 1)": [
+          "South (Good: Found Important Item/Exit)"
+        ],
+        "(3, 2)": [
+          "East (Bad: Hit Alarm Trap)"
+        ],
+        "(3, 3)": [
+          "East (Good: Found Important Item/Exit)"
+        ],
+        "(5, 3)": [
+          "West (Bad: Hit Wall)",
+          "North (Good: Found Important Item/Exit)"
+        ],
+        "(6, 3)": [
+          "East (Bad: Hit Wall)",
+          "North (Good: Bypassed Alarm)"
+        ],
+        "(6, 1)": [
+          "North (Good: Found Important Item/Exit)",
+          "West (Good: Found Important Item/Exit)"
+        ],
+        "(2, 1)": [
+          "South (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 3)": [
+          "North (Bad: Hit Alarm Trap)"
+        ],
+        "(2, 5)": [
+          "South (Bad: Hit Wall)"
+        ],
+        "(1, 6)": [
+          "West (Good: Found Important Item/Exit)"
+        ]
+      },
+      "lesson": "Run Completed."
+    },
+    {
+      "run": 4,
+      "result": "SUCCESS",
+      "battery_left": 51,
+      "steps": 21,
+      "cause_of_death": "",
+      "key_collected": true,
+      "shield_collected": true,
+      "battery_collected": false,
+      "jammer_collected": true,
+      "deactivator_collected": false,
+      "fields": {
+        "(0, 1)": "Dead End",
+        "(0, 2)": "Wall",
+        "(1, 1)": "Wall",
+        "(0, 0)": "Safe Path",
+        "(1, 0)": "Safe Path",
+        "(2, 0)": "Safe Path",
+        "(3, 0)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 0)": "Wall",
+        "(3, 1)": "Debris Hazard",
+        "(2, 1)": "Safe Path",
+        "(2, 2)": "Safe Path",
+        "(2, 3)": "Wall",
+        "(1, 2)": "Safe Path",
+        "(1, 3)": "Safe Path",
+        "(1, 4)": "Debris Hazard",
+        "(0, 3)": "Safe Path",
+        "(0, 4)": "Safe Path",
+        "(0, 5)": "Safe Path",
+        "(1, 5)": "Energy Shield",
+        "(0, 6)": "Safe Path",
+        "(1, 6)": "Safe Path",
+        "(2, 6)": "Safe Path",
+        "(3, 6)": "Safe Path",
+        "(3, 5)": "Wall",
+        "(4, 6)": "Safe Path",
+        "(5, 6)": "Safe Path",
+        "(6, 6)": "Exit Door",
+        "(5, 5)": "Debris Hazard",
+        "(5, 4)": "Safe Path",
+        "(5, 3)": "Alarm Trap",
+        "(6, 4)": "Wall",
+        "(4, 4)": "Alarm Trap",
+        "(4, 5)": "Safe Path",
+        "(6, 5)": "Soft Dead End (Only debris path forward. Take only if necessary)",
+        "(4, 3)": "Key Location",
+        "(3, 4)": "Hunter Jammer",
+        "(4, 2)": "Alarm Trap",
+        "(3, 3)": "Alarm Trap",
+        "(5, 2)": "Wall",
+        "(4, 1)": "Safe Path",
+        "(5, 1)": "Battery Pack",
+        "(3, 2)": "Safe Path",
+        "(6, 3)": "Safe Path",
+        "(6, 2)": "Safe Path",
+        "(6, 1)": "Safe Path",
+        "(6, 0)": "Alarm Deactivator",
+        "(2, 4)": "Safe Path",
+        "(2, 5)": "Safe Path"
+      },
+      "moves": {
+        "(5, 6)": [
+          "West (Bad: Hit Debris Hazard)",
+          "South (Good: Found Important Item/Exit)"
+        ],
+        "(5, 4)": [
+          "East (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 5)": [
+          "South (Bad: Hit Debris Hazard)",
+          "West (Bad: Hit Alarm Trap)"
+        ],
+        "(6, 5)": [
+          "East (Good: Found Important Item/Exit)",
+          "North (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 4)": [
+          "West (Good: Found Important Item/Exit)"
+        ],
+        "(4, 1)": [
+          "South (Good: Found Important Item/Exit)"
+        ],
+        "(3, 2)": [
+          "East (Bad: Hit Alarm Trap)"
+        ],
+        "(3, 3)": [
+          "East (Good: Found Important Item/Exit)"
+        ],
+        "(5, 3)": [
+          "West (Bad: Hit Wall)",
+          "North (Good: Found Important Item/Exit)"
+        ],
+        "(6, 3)": [
+          "East (Bad: Hit Wall)",
+          "North (Good: Bypassed Alarm)"
+        ],
+        "(6, 1)": [
+          "North (Good: Found Important Item/Exit)",
+          "West (Good: Found Important Item/Exit)"
+        ],
+        "(2, 1)": [
+          "South (Bad: Hit Debris Hazard)"
+        ],
+        "(4, 3)": [
+          "North (Bad: Hit Alarm Trap)"
+        ],
+        "(2, 5)": [
+          "South (Bad: Hit Wall)"
+        ],
+        "(1, 6)": [
+          "West (Good: Found Important Item/Exit)"
+        ],
+        "(1, 3)": [
+          "East (Bad: Hit Debris Hazard)"
+        ],
+        "(1, 4)": [
+          "East (Good: Found Important Item/Exit)"
+        ],
+        "(2, 4)": [
+          "South (Good: Found Important Item/Exit)"
+        ],
+        "(3, 4)": [
+          "South (Bad: Hit Alarm Trap)"
+        ]
+      },
+      "lesson": "Run Completed."
+    }
+  ]
+}
